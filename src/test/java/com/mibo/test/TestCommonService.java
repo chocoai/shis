@@ -14,6 +14,6 @@ public class TestCommonService extends BaseTest {
 	}
 	
 	public void updateVersion() {
-		print(commonService.updateVersion("1","1.0"));
+//		print(commonService.updateVersion("1","1.0"));
 	}
 }
