@@ -66,7 +66,7 @@ public class StringUtil extends StringUtils {
 		if (StringUtils.isBlank(phone)) {
 			return false;
 		}
-		Pattern p = Pattern.compile("^((13[0-9])|(15[^4,\\D])|(18[0-9])|(17[0-9])|(14[5,7]))\\d{8}$");
+		Pattern p = Pattern.compile("^((13[0-9])|(15[^4,\\D])|(18[0-9])|(19[0-9])|(17[0-9])|(14[5,7]))\\d{8}$");
 		Matcher m = p.matcher(phone);
 		return m.matches();
 	}
