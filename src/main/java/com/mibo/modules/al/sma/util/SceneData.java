@@ -103,9 +103,8 @@ public class SceneData {
 			return shield;
 		}
 
-		public void setShieId(boolean shield) {
-			this.shield = shield;
-		}
-        
+        public void setShield(boolean shield) {
+            this.shield = shield;
+        }
     }
 }
