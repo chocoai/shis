@@ -139,7 +139,27 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("battery_push",batteryPush);
 		return (M)this;
 	}
-	
+
+	public M setCurrentLevel(java.lang.Integer CurrentLevel) {
+		set("current_level", CurrentLevel);
+		return (M)this;
+	}
+
+	public java.lang.Integer getCurrentLevel() {
+		return getInt("current_level");
+	}
+
+
+	public M setOnLevel(java.lang.Integer OnLevel) {
+		set("on_level", OnLevel);
+		return (M)this;
+	}
+
+	public java.lang.Integer getOnLevel() {
+		return getInt("on_level");
+	}
+
+
 	public java.lang.Boolean getBatteryPush(){
 		return get("battery_push");
 	}
