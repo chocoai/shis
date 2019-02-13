@@ -152,7 +152,7 @@ public class UserSceneService extends com.mibo.common.base.BaseService {
 		String strJson = "";
 		List<DeviceSendSceneDataBean.MultiparamsBean> multiparamsBeanList = new ArrayList<DeviceSendSceneDataBean.MultiparamsBean>();
 		for (SceneData.DataBean data : sd.getData()) {
-			if (data.getControlData1() != null) {
+			if (data.getControlData1() != null&&!data.getProduct_name().contains("HOSCZB")) {
 				DeviceSendSceneDataBean.MultiparamsBean multiparamsBean = new DeviceSendSceneDataBean.MultiparamsBean();
 				String str = new Gson().toJson(data.getControlData1()).replace("\\", "");
 				str = str.substring(1, str.length() - 1);
