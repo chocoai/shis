@@ -104,6 +104,8 @@ public class UserSceneService extends com.mibo.common.base.BaseService {
 		if (StringUtil.isBlanks(new String[] { deviceName, sceneID })) {
 			return renderErrorParameter();
 		}
+
+		//获取用户场景集合
 		List<UserScene> userSceneList = userSceneDao.queryUserSceneByUserId(Integer.valueOf(userId));
 		for (UserScene userScene : userSceneList) {
 			SceneData sd = (SceneData) JSON.parseObject(Base64Kit.decodeToStr(userScene.getSceneData()),
@@ -116,6 +118,7 @@ public class UserSceneService extends com.mibo.common.base.BaseService {
 						if (Integer.parseInt(sceneID) == db.getControlId()) {
 							String topicFullName = new String();
 							String productKey = new String();
+
 							for (SceneData.DataBean tem : dbs) {
 								Device device = deviceDao.queryDeviceByDeviceName(tem.getDevice_name());
 								if (device == null) {
@@ -132,14 +135,18 @@ public class UserSceneService extends com.mibo.common.base.BaseService {
 									productKey = device.getProductKey();
 								}
 							}
+
 							if (!StringUtil.isBlanks(new String[] { topicFullName, productKey })) {
+
+								//执行场景
 								PubResponse response = com.mibo.modules.al.sma.util.TopicMsgUtil.sendMessage(productKey,
 										topicFullName, setSendSceneData(sd));
 								if (!response.getSuccess().booleanValue()) {
 									return renderError(response.getErrorMessage());
 								}
+								return renderMeg();
 							}
-							return renderMeg();
+
 						}
 					}
 				}
@@ -148,19 +155,31 @@ public class UserSceneService extends com.mibo.common.base.BaseService {
 		return renderMeg();
 	}
 
+	/**
+	 * 执行场景中的相关设备操作
+	 * @param sd
+	 * @return
+	 */
 	public static String setSendSceneData(SceneData sd) {
 		String strJson = "";
 		List<DeviceSendSceneDataBean.MultiparamsBean> multiparamsBeanList = new ArrayList<DeviceSendSceneDataBean.MultiparamsBean>();
 		for (SceneData.DataBean data : sd.getData()) {
-			if (data.getControlData1() != null&&!data.getProduct_name().contains("HOSCZB")) {
+
+			//场景面板和感应器不执行操作
+			if (data.getControlData1() != null&&!data.getProduct_name().contains("HOSCZB")
+					&&!data.getProduct_name().contains("HODSZB")&&!data.getProduct_name().contains("HOGSZB")
+					&&!data.getProduct_name().contains("HOMSZB")&&!data.getProduct_name().contains("HOSAZB")) {
+
 				DeviceSendSceneDataBean.MultiparamsBean multiparamsBean = new DeviceSendSceneDataBean.MultiparamsBean();
 				String str = new Gson().toJson(data.getControlData1()).replace("\\", "");
 				str = str.substring(1, str.length() - 1);
+
 				ControlBean controlBean = (ControlBean) new Gson().fromJson(str, ControlBean.class);
 				multiparamsBean.setIndex(controlBean.getParams().getIndex());
 				multiparamsBean.setOnOff(controlBean.getParams().isOnOff());
 				multiparamsBean.setName(data.getDevice_name());
 				multiparamsBeanList.add(multiparamsBean);
+
 				if (data.getProduct_name().contains("HODRZB")) {
 					if (data.getIsControl1()) {
 						strJson = strJson + "{\"Name\": \"" + data.getDevice_name() + "\",\"Index\": "
@@ -181,13 +200,16 @@ public class UserSceneService extends com.mibo.common.base.BaseService {
 				}
 			}
 		}
+
 		String overStrJson = "{\"id\": \"123\",\"version\": \"1.0\",\"multiparams\": ["
 				+ strJson.substring(0, strJson.length() - 1) + "],\"method\": \"set\"}";
+
 		DeviceSendSceneDataBean deviceSendSceneDataBean = new DeviceSendSceneDataBean();
 		deviceSendSceneDataBean.setId(StringUtil.getCount());
 		deviceSendSceneDataBean.setMethod("set");
 		deviceSendSceneDataBean.setVersion("1.0");
 		deviceSendSceneDataBean.setMultiparams(multiparamsBeanList);
+
 		String msg = Base64Kit.encode(overStrJson);
 		return msg;
 	}
