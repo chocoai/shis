@@ -84,6 +84,26 @@ public class ControlBean {
         private String DataType;
         private int State;
 
+        private String CurrentLevel;
+
+        private String OnLevel;
+
+        public String getCurrentLevel() {
+            return CurrentLevel;
+        }
+
+        public void setCurrentLevel(String currentLevel) {
+            CurrentLevel = currentLevel;
+        }
+
+        public String getOnLevel() {
+            return OnLevel;
+        }
+
+        public void setOnLevel(String onLevel) {
+            OnLevel = onLevel;
+        }
+
         public int getBatteryAlarm() {
             return BatteryAlarm;
         }

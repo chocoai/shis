@@ -169,7 +169,12 @@ public class UserSceneService extends com.mibo.common.base.BaseService {
 						strJson = strJson + "{\"Name\": \"" + data.getDevice_name() + "\",\"Index\": "
 								+ controlBean.getParams().getIndex() + ",\"State\": " + 0 + "},";
 					}
-				} else {
+				} else if(data.getProduct_name().contains("HOSWZB11")){
+					strJson = strJson + "{\"Name\": \"" + data.getDevice_name() + "\",\"Index\": "
+							+ controlBean.getParams().getIndex()  + ",\"CurrentLevel\": " + controlBean.getParams().getCurrentLevel()
+							+ ",\"OnLevel\": " + controlBean.getParams().getOnLevel()
+							+ "},";
+				}else {
 					strJson = strJson + "{\"Name\": \"" + data.getDevice_name() + "\",\"Index\": "
 							+ controlBean.getParams().getIndex() + ",\"OnOff\": " + controlBean.getParams().isOnOff()
 							+ "},";
