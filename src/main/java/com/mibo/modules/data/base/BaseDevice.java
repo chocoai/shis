@@ -13,7 +13,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("id", id);
 		return (M)this;
 	}
-	
+
 	public java.lang.Integer getId() {
 		return getInt("id");
 	}
@@ -22,7 +22,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("gateway_id", gatewayId);
 		return (M)this;
 	}
-	
+
 	public java.lang.Integer getGatewayId() {
 		return getInt("gateway_id");
 	}
@@ -31,7 +31,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("product_name", productName);
 		return (M)this;
 	}
-	
+
 	public java.lang.String getProductName() {
 		return getStr("product_name");
 	}
@@ -40,7 +40,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("product_key", productKey);
 		return (M)this;
 	}
-	
+
 	public java.lang.String getProductKey() {
 		return getStr("product_key");
 	}
@@ -49,7 +49,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("device_name", deviceName);
 		return (M)this;
 	}
-	
+
 	public java.lang.String getDeviceName() {
 		return getStr("device_name");
 	}
@@ -58,7 +58,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("device_secret", deviceSecret);
 		return (M)this;
 	}
-	
+
 	public java.lang.String getDeviceSecret() {
 		return getStr("device_secret");
 	}
@@ -67,7 +67,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("device_state", deviceState);
 		return (M)this;
 	}
-	
+
 	public java.lang.Boolean getDeviceState() {
 		return get("device_state");
 	}
@@ -76,7 +76,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("is_laying", isLaying);
 		return (M)this;
 	}
-	
+
 	public java.lang.Boolean getIsLaying() {
 		return get("is_laying");
 	}
@@ -85,7 +85,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("is_push", isPush);
 		return (M)this;
 	}
-	
+
 	public java.lang.Boolean getIsPush() {
 		return get("is_push");
 	}
@@ -94,7 +94,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("is_laying_time", isLayingTime);
 		return (M)this;
 	}
-	
+
 	public java.lang.Boolean getIsLayingTime() {
 		return get("is_laying_time");
 	}
@@ -103,7 +103,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("is_switch", isSwitch);
 		return (M)this;
 	}
-	
+
 	public java.lang.Boolean getIsSwitch() {
 		return get("is_switch");
 	}
@@ -112,7 +112,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("battery_alarm", batteryAlarm);
 		return (M)this;
 	}
-	
+
 	public java.lang.String getBatteryAlarm() {
 		return getStr("battery_alarm");
 	}
@@ -121,7 +121,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("device_alias", deviceAlias);
 		return (M)this;
 	}
-	
+
 	public java.lang.String getDeviceAlias() {
 		return getStr("device_alias");
 	}
@@ -130,7 +130,7 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		set("add_time", addTime);
 		return (M)this;
 	}
-	
+
 	public java.util.Date getAddTime() {
 		return get("add_time");
 	}
@@ -163,5 +163,24 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 	public java.lang.Boolean getBatteryPush(){
 		return get("battery_push");
 	}
-	
+
+	public M setUserId(java.lang.Integer UserId) {
+		set("user_id", UserId);
+		return (M)this;
+	}
+
+	public java.lang.Integer getUserId() {
+		return getInt("user_id");
+	}
+
+	public M setDeviceProtocolType(java.lang.Integer DeviceProtocolType) {
+		set("device_protocol_type", DeviceProtocolType);
+		return (M)this;
+	}
+
+	public java.lang.Integer getDeviceProtocolType() {
+		return getInt("device_protocol_type");
+	}
+
+
 }

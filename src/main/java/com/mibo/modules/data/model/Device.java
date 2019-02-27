@@ -17,7 +17,7 @@ public class Device extends BaseDevice<Device> {
 	}
 
 	public Device addDevice(Integer gatewayId, String productName, String productKey, String deviceName,
-			String deviceSecret, Date date) {
+							String deviceSecret, Date date) {
 		/* 34 */ Device device = new Device();
 		try {
 			/* 36 */ device.setGatewayId(gatewayId);
@@ -78,6 +78,33 @@ public class Device extends BaseDevice<Device> {
 		/* 133 */ String sql = "UPDATE t_device SET battery_push = 0 WHERE gateway_id\tIN (SELECT gateway_id FROM t_user_gateway WHERE user_id = ?)";
 
 		/* 135 */ Db.update(sql, new Object[] { userId });
+	}
+
+	//添加wifi设备
+	public Device addWifiDevice(Integer userId, String productName, String productKey, String deviceName,
+								String deviceSecret, Date date) {
+		Device device = new Device();
+		try {
+			device.setUserId(userId);
+			device.setProductName(productName);
+			device.setProductKey(productKey);
+			device.setDeviceName(deviceName);
+			device.setDeviceSecret(deviceSecret);
+			device.setAddTime(date);
+			device.setDeviceProtocolType(2);
+			if (device.save()) {
+				return device;
+			}
+		} catch (Exception e) {
+			/* 46 */ LogKit.error("addDevice", e);
+		}
+		/* 48 */ return null;
+	}
+
+	//查询wifi列表
+	public List<Device> queryWifiDeviceListByUserId(Integer userId) {
+		String sql = "SELECT * FROM t_device WHERE device_protocol_type=2 and user_id = ?;";
+		return find(sql, new Object[] { userId });
 	}
 }
 

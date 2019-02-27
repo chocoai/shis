@@ -90,93 +90,96 @@ public class ProductService extends com.mibo.common.base.BaseService {
 
 	@Before({ Tx.class })
 	public Response registerDevice(String userId, String gatewayId, String productModel, String deviceName) {
-		/* 116 */ if (StringUtil.isBlanks(new String[] { gatewayId, productModel, deviceName })) {
-			/* 117 */ return renderErrorParameter();
-		}
-
-		/* 120 */ Gateway gateway = (Gateway) gatewayDao.findById(gatewayId);
-		/* 121 */ if (gateway == null) {
-			/* 122 */ return renderError("网关编号错误!");
-		}
-
-		/* 125 */ UserGateway userGateway = userGatewayDao.queryUserGatewayByUserIdGatewayId(Integer.valueOf(userId),
-				/* 126 */ Integer.valueOf(gatewayId));
-		/* 127 */ if (userGateway == null) {
-			/* 129 */ userGatewayDao.addUserGateway(Integer.valueOf(userId), Integer.valueOf(gatewayId), new Date());
-		}
-		/* 131 */ this.map = getMap();
-
-		/* 133 */ Device device = getRedisDevice(deviceName);
-		/* 134 */ if (device == null) {
-			/* 136 */ device = deviceDao.queryDeviceByDeviceName(deviceName);
-		}
-		/* 138 */ if (device != null) {
-
-			/* 142 */ if (Integer.parseInt(gatewayId) != device.getGatewayId().intValue()) {
-				/* 143 */ User user = userDao.queryUserByGgatewayId(device.getGatewayId());
-				/* 144 */ return renderError(105, "该设备已在" + user.getPhone() + "帐号下绑定！");
+		Gateway gateway=null;
+		if (gatewayId != null) {
+			if (StringUtil.isBlanks(new String[] { gatewayId, productModel, deviceName })) {
+				return renderErrorParameter();
 			}
-			/* 146 */ this.map.put("ProductKey", device.getProductKey());
-			/* 147 */ this.map.put("DeviceSecret", device.getDeviceSecret());
-			/* 148 */ return renderResult(this.map);
+			gateway = (Gateway) gatewayDao.findById(gatewayId);
+			if (gateway == null) {
+				return renderError("网关编号错误!");
+			}
+			UserGateway userGateway = userGatewayDao.queryUserGatewayByUserIdGatewayId(Integer.valueOf(userId),Integer.valueOf(gatewayId));
+			if (userGateway == null) {
+				userGatewayDao.addUserGateway(Integer.valueOf(userId), Integer.valueOf(gatewayId), new Date());
+			}
 		}
-		/* 150 */ Date date = new Date();
+		this.map = getMap();
 
-		/* 152 */ QueryDeviceDetailResponse deviceInfo = DeviceUtil.queryDeviceByProductKeyDeviceName(deviceName);
-		/* 153 */ if (deviceInfo != null) {
-			/* 154 */ String productKey = deviceInfo.getData().getProductKey();
-			/* 155 */ String deviceSecret = deviceInfo.getData().getDeviceSecret();
-			/* 156 */ this.map.put("ProductKey", productKey);
-			/* 157 */ this.map.put("DeviceSecret", deviceSecret);
+		Device device = getRedisDevice(deviceName);
+		if (device == null) {
+			device = deviceDao.queryDeviceByDeviceName(deviceName);
+		}
+		if (device != null) {
+			if (gatewayId != null && Integer.parseInt(gatewayId) != device.getGatewayId().intValue()) {
+				User user = userDao.queryUserByGgatewayId(device.getGatewayId());
+				return renderError(105, "该设备已在" + user.getPhone() + "帐号下绑定！");
+			}else if (gatewayId == null && device != null) {//网关id为空，设备独自运行
+				return renderError(105, "该设备已被绑定！");
+			}
+			this.map.put("ProductKey", device.getProductKey());
+			this.map.put("DeviceSecret", device.getDeviceSecret());
+			return renderResult(this.map);
+		}
+		Date date = new Date();
+		QueryDeviceDetailResponse deviceInfo = DeviceUtil.queryDeviceByProductKeyDeviceName(deviceName);
+		if (deviceInfo != null) {
+			String productKey = deviceInfo.getData().getProductKey();
+			String deviceSecret = deviceInfo.getData().getDeviceSecret();
+			this.map.put("ProductKey", productKey);
+			this.map.put("DeviceSecret", deviceSecret);
 
-			/* 159 */ device = deviceDao.addDevice(gateway.getId(), productModel, productKey, deviceName, deviceSecret,
-					date);
-			/* 160 */ if (device != null) {
-				/* 161 */ setRedisDevice(device);
+			if (gatewayId != null) {
+				device = deviceDao.addDevice(gateway.getId(), productModel, productKey, deviceName, deviceSecret,date);
+			}else { //添加wifi设备
+				System.out.println(userId+"-----"+productModel+"----"+productKey+"-----"+deviceName+"-----"+deviceSecret);
+				device = deviceDao.addWifiDevice(Integer.parseInt(userId), productModel, productKey, deviceName, deviceSecret,date);
+			}
+			if (device != null) {
+				setRedisDevice(device);
 
-				/* 163 */ if (DeviceTypeTAG.isSensor(productModel)) {
-					/* 164 */ device.setIsPush(Boolean.valueOf(true));
-					/* 165 */ device.setIsLaying(Boolean.valueOf(true));
-					/* 166 */ device.update();
+				if (DeviceTypeTAG.isSensor(productModel)) {
+					device.setIsPush(Boolean.valueOf(true));
+					device.setIsLaying(Boolean.valueOf(true));
+					device.update();
 				}
-				/* 168 */ if (DeviceTypeTAG.isControl(productModel)) {
-					/* 169 */ device.setIsSwitch(Boolean.valueOf(true));
-					/* 170 */ device.update();
-					/* 171 */ int count = DeviceTypeTAG.controlCount(productModel);
-					/* 172 */ deviceSwitchDao.addDeviceSwitch(device.getId(), count);
+				if (DeviceTypeTAG.isControl(productModel)) {
+					device.setIsSwitch(Boolean.valueOf(true));
+					device.update();
+					int count = DeviceTypeTAG.controlCount(productModel);
+					deviceSwitchDao.addDeviceSwitch(device.getId(), count);
 				}
 			}
-			/* 175 */ return renderResult(this.map);
+			return renderResult(this.map);
 		}
 
-		/* 178 */ String productKey = ProductUtil.queryProductKeyByProductModel(productModel);
+		String productKey = ProductUtil.queryProductKeyByProductModel(productModel);
 
-		/* 180 */ RegisterDeviceResponse response = DeviceUtil.registerDevice(productKey, deviceName);
-		/* 181 */ if (!response.getSuccess().booleanValue()) {
-			/* 182 */ return renderError(response.getErrorMessage());
+		RegisterDeviceResponse response = DeviceUtil.registerDevice(productKey, deviceName);
+		if (!response.getSuccess().booleanValue()) {
+			return renderError(response.getErrorMessage());
 		}
-		/* 184 */ String deviceSecret = response.getData().getDeviceSecret();
-		/* 185 */ this.map.put("ProductKey", productKey);
-		/* 186 */ this.map.put("DeviceSecret", deviceSecret);
+		String deviceSecret = response.getData().getDeviceSecret();
+		this.map.put("ProductKey", productKey);
+		this.map.put("DeviceSecret", deviceSecret);
 
-		/* 188 */ device = deviceDao.addDevice(gateway.getId(), productModel, productKey, deviceName, deviceSecret,
-				date);
-		/* 189 */ if (device != null) {
-			/* 190 */ setRedisDevice(device);
+		device = deviceDao.addDevice(gateway.getId(), productModel, productKey, deviceName, deviceSecret,date);
+		if (device != null) {
+			setRedisDevice(device);
 
-			/* 192 */ if (DeviceTypeTAG.isSensor(productModel)) {
-				/* 193 */ device.setIsPush(Boolean.valueOf(true));
-				/* 194 */ device.setIsLaying(Boolean.valueOf(true));
-				/* 195 */ device.update();
+			if (DeviceTypeTAG.isSensor(productModel)) {
+				device.setIsPush(Boolean.valueOf(true));
+				device.setIsLaying(Boolean.valueOf(true));
+				device.update();
 			}
-			/* 197 */ if (DeviceTypeTAG.isControl(productModel)) {
-				/* 198 */ device.setIsSwitch(Boolean.valueOf(true));
-				/* 199 */ device.update();
-				/* 200 */ int count = DeviceTypeTAG.controlCount(productModel);
-				/* 201 */ deviceSwitchDao.addDeviceSwitch(device.getId(), count);
+			if (DeviceTypeTAG.isControl(productModel)) {
+				device.setIsSwitch(Boolean.valueOf(true));
+				device.update();
+				int count = DeviceTypeTAG.controlCount(productModel);
+				deviceSwitchDao.addDeviceSwitch(device.getId(), count);
 			}
 		}
-		/* 204 */ return renderResult(this.map);
+		return renderResult(this.map);
 	}
 
 	private List<Gateway> synchroUserGatewayList(String userId) {
@@ -201,6 +204,30 @@ public class ProductService extends com.mibo.common.base.BaseService {
 
 	public Response getGatewayList(String userId) {
 		/* 240 */ return renderResult(synchroUserGatewayList(userId));
+	}
+
+	//wifi设备列表
+	public Response getWifiDeviceList(String userId) {
+		/* 240 */ return renderResult(synchroUserWifiDeviceList(userId));
+	}
+
+	private List<Device> synchroUserWifiDeviceList(String userId) {
+		List<Device> deviceList = deviceDao.queryWifiDeviceListByUserId(Integer.valueOf(userId));
+		for (Device device : deviceList) {
+			boolean deviceState = false;
+			GetDeviceStatusResponse response = DeviceUtil.getDeviceStatus(device.getProductKey(),device.getDeviceName());
+			if (response.getSuccess().booleanValue()) {
+				if (response.getData().getStatus().equals(ConstUtils.DEVICE_STATUS.OFFLINE.getValue())) {
+					deviceState = false;
+				}
+				if (response.getData().getStatus().equals(ConstUtils.DEVICE_STATUS.ONLINE.getValue())) {
+					deviceState = true;
+				}
+				device.setDeviceState(Boolean.valueOf(deviceState));
+				device.update();
+			}
+		}
+		/* 229 */ return deviceList;
 	}
 
 	public Response gatewayDetails(String gatewayId) {
@@ -321,7 +348,7 @@ public class ProductService extends com.mibo.common.base.BaseService {
 			/* 395 */ return renderErrorParameter();
 		}
 		/* 397 */ if ((!type.equals(ConstUtils.PRODUCT_TYPE.DEVICE.getValue())) &&
-		/* 398 */ (!type.equals(ConstUtils.PRODUCT_TYPE.GATEWAY.getValue()))) {
+				/* 398 */ (!type.equals(ConstUtils.PRODUCT_TYPE.GATEWAY.getValue()))) {
 			/* 399 */ return renderError("类型错误！");
 		}
 		/* 401 */ if (type.equals(ConstUtils.PRODUCT_TYPE.GATEWAY.getValue())) {
@@ -351,7 +378,7 @@ public class ProductService extends com.mibo.common.base.BaseService {
 			/* 438 */ return renderErrorParameter();
 		}
 		/* 440 */ if ((!type.equals(ConstUtils.PRODUCT_TYPE.DEVICE.getValue())) &&
-		/* 441 */ (!type.equals(ConstUtils.PRODUCT_TYPE.GATEWAY.getValue()))) {
+				/* 441 */ (!type.equals(ConstUtils.PRODUCT_TYPE.GATEWAY.getValue()))) {
 			/* 442 */ return renderError("类型错误!");
 		}
 		/* 444 */ if (type.equals(ConstUtils.PRODUCT_TYPE.DEVICE.getValue())) {

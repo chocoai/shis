@@ -19,7 +19,7 @@ public class DeviceMsg extends BaseDeviceMsg<DeviceMsg> {
 
 	public Page<DeviceMsg> queryPageDeviceMessage(String userId, int pageNo) {
 		/* 30 */ String sql = "SELECT a.*,b.product_name as productName ,b.device_name as deviceName";
-		/* 31 */ String from = "FROM t_device_msg a LEFT JOIN t_device b ON a.device_id = b.id WHERE a.device_id IN (SELECT b.id FROM t_user_gateway a LEFT JOIN t_device b ON a.gateway_id = b.gateway_id WHERE user_id = ?) ORDER BY msg_time DESC";
+		/* 31 */ String from = "FROM t_device_msg a LEFT JOIN t_device b ON a.device_id = b.id WHERE a.device_id IN (SELECT b1.id FROM t_user_gateway a1 LEFT JOIN t_device b1 ON a1.gateway_id = b1.gateway_id WHERE a1.user_id = ?) ORDER BY msg_time DESC";
 
 		/* 35 */ return paginate(pageNo, 50, sql, from, new Object[] { userId });
 	}
@@ -75,7 +75,7 @@ public class DeviceMsg extends BaseDeviceMsg<DeviceMsg> {
 	}
 
 	public Page<DeviceMsg> searchDeviceMsgByTagProductKeyword(Integer userId, int pageNo,
-			List<TagProduct> tagProductList, String keyword) {
+															  List<TagProduct> tagProductList, String keyword) {
 		String sql = "SELECT a.*,b.device_name AS deviceName,b.product_name AS productName";
 		String from = "FROM t_device_msg a LEFT JOIN t_device b ON a.device_id = b.id "
 				+ "WHERE a.device_id IN (SELECT a.id FROM t_device a "
