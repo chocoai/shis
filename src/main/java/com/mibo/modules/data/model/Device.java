@@ -4,6 +4,7 @@ import com.jfinal.kit.Kv;
 import com.jfinal.kit.LogKit;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
+import com.mibo.common.util.StringUtil;
 import com.mibo.modules.data.base.BaseDevice;
 import java.util.Date;
 import java.util.List;
@@ -85,7 +86,7 @@ public class Device extends BaseDevice<Device> {
 								String deviceSecret, Date date) {
 		Device device = new Device();
 		try {
-			device.setUserId(userId);
+			device.setDeviceUserId(userId);
 			device.setProductName(productName);
 			device.setProductKey(productKey);
 			device.setDeviceName(deviceName);
@@ -103,7 +104,7 @@ public class Device extends BaseDevice<Device> {
 
 	//查询wifi列表
 	public List<Device> queryWifiDeviceListByUserId(Integer userId) {
-		String sql = "SELECT * FROM t_device WHERE device_protocol_type=2 and user_id = ?;";
+		String sql = "SELECT * FROM t_device WHERE device_protocol_type=2 and device_user_id = ?;";
 		return find(sql, new Object[] { userId });
 	}
 }

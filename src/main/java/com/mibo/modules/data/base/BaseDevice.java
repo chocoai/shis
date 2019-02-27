@@ -164,13 +164,13 @@ public abstract class BaseDevice<M extends BaseDevice<M>> extends Model<M> imple
 		return get("battery_push");
 	}
 
-	public M setUserId(java.lang.Integer UserId) {
-		set("user_id", UserId);
+	public M setDeviceUserId(java.lang.Integer UserId) {
+		set("device_user_id", UserId);
 		return (M)this;
 	}
 
-	public java.lang.Integer getUserId() {
-		return getInt("user_id");
+	public java.lang.Integer getDeviceUserId() {
+		return getInt("device_user_id");
 	}
 
 	public M setDeviceProtocolType(java.lang.Integer DeviceProtocolType) {
