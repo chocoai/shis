@@ -18,6 +18,15 @@ public class DeviceSwitch extends BaseDeviceSwitch<DeviceSwitch> {
 		}
 	}
 
+	//添加wifi插座
+	public void addWifiDeviceSwitch(Integer deviceId) {
+		DeviceSwitch ds = new DeviceSwitch();
+		ds.setDeviceId(deviceId);
+		ds.setPlaceNo(0);
+		ds.setSwitchState(Boolean.valueOf(false));
+		ds.save();
+	}
+
 	public List<DeviceSwitch> queryDeviceSwitchByDeviceId(Integer deviceId) {
 		/* 36 */ String sql = "SELECT * FROM t_device_switch WHERE device_id = ?";
 		/* 37 */ return find(sql, new Object[] { deviceId });

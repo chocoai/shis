@@ -132,7 +132,6 @@ public class ProductService extends com.mibo.common.base.BaseService {
 			if (gatewayId != null) {
 				device = deviceDao.addDevice(gateway.getId(), productModel, productKey, deviceName, deviceSecret,date);
 			}else { //添加wifi设备
-				System.out.println(userId+"-----"+productModel+"----"+productKey+"-----"+deviceName+"-----"+deviceSecret);
 				device = deviceDao.addWifiDevice(Integer.parseInt(userId), productModel, productKey, deviceName, deviceSecret,date);
 			}
 			if (device != null) {
@@ -149,6 +148,9 @@ public class ProductService extends com.mibo.common.base.BaseService {
 					int count = DeviceTypeTAG.controlCount(productModel);
 					deviceSwitchDao.addDeviceSwitch(device.getId(), count);
 				}
+				if (DeviceTypeTAG.isWifi(productModel)) {//是否是wifi插座
+					deviceSwitchDao.addWifiDeviceSwitch(device.getId());
+				}
 			}
 			return renderResult(this.map);
 		}
@@ -163,7 +165,11 @@ public class ProductService extends com.mibo.common.base.BaseService {
 		this.map.put("ProductKey", productKey);
 		this.map.put("DeviceSecret", deviceSecret);
 
-		device = deviceDao.addDevice(gateway.getId(), productModel, productKey, deviceName, deviceSecret,date);
+		if (gatewayId != null) {
+			device = deviceDao.addDevice(gateway.getId(), productModel, productKey, deviceName, deviceSecret,date);
+		}else { //添加wifi设备
+			device = deviceDao.addWifiDevice(Integer.parseInt(userId), productModel, productKey, deviceName, deviceSecret,date);
+		}
 		if (device != null) {
 			setRedisDevice(device);
 
@@ -177,6 +183,9 @@ public class ProductService extends com.mibo.common.base.BaseService {
 				device.update();
 				int count = DeviceTypeTAG.controlCount(productModel);
 				deviceSwitchDao.addDeviceSwitch(device.getId(), count);
+			}
+			if (DeviceTypeTAG.isWifi(productModel)) {//是否是wifi插座
+				deviceSwitchDao.addWifiDeviceSwitch(device.getId());
 			}
 		}
 		return renderResult(this.map);
@@ -310,37 +319,37 @@ public class ProductService extends com.mibo.common.base.BaseService {
 		/* 346 */ return renderMeg();
 	}
 
+	//获取设备详情
 	public Response getDeviceDetails(String deviceId) {
-		/* 355 */ if (StringUtil.isBlanks(new String[] { deviceId })) {
-			/* 356 */ return renderErrorParameter();
+		if (StringUtil.isBlanks(new String[] { deviceId })) {
+			return renderErrorParameter();
 		}
-		/* 358 */ Map<String, Object> map = getMap();
-		/* 359 */ Device device = deviceDao.queryDeviceById(Integer.valueOf(deviceId));
-		/* 360 */ if (device == null) {
-			/* 361 */ return renderError("设备编号不存在！");
+		Map<String, Object> map = getMap();
+		Device device = deviceDao.queryDeviceById(Integer.valueOf(deviceId));
+		if (device == null) {
+			return renderError("设备编号不存在！");
 		}
-		/* 363 */ GetDeviceStatusResponse response = DeviceUtil.getDeviceStatus(device.getProductKey(),
-				device.getDeviceName());
-		/* 364 */ if (response.getSuccess().booleanValue()) {
-			/* 365 */ if (response.getData().getStatus().equals(ConstUtils.DEVICE_STATUS.OFFLINE.getValue())) {
-				/* 366 */ device.setDeviceState(Boolean.valueOf(false));
+		GetDeviceStatusResponse response = DeviceUtil.getDeviceStatus(device.getProductKey(),device.getDeviceName());
+		if (response.getSuccess().booleanValue()) {
+			if (response.getData().getStatus().equals(ConstUtils.DEVICE_STATUS.OFFLINE.getValue())) {
+				device.setDeviceState(Boolean.valueOf(false));
 			}
-			/* 368 */ if (response.getData().getStatus().equals(ConstUtils.DEVICE_STATUS.ONLINE.getValue())) {
-				/* 369 */ device.setDeviceState(Boolean.valueOf(true));
+			if (response.getData().getStatus().equals(ConstUtils.DEVICE_STATUS.ONLINE.getValue())) {
+				device.setDeviceState(Boolean.valueOf(true));
 			}
-			/* 371 */ updateDeviceStatusByTime(device);
-			/* 372 */ device.update();
+			updateDeviceStatusByTime(device);
+			device.update();
 		}
 
-		/* 375 */ if (device.getIsLayingTime().booleanValue()) {
-			/* 376 */ map.put("deviceLayingList", deviceLayingDao.queryDeviceLayingByDeviceId(device.getId()));
+		if (device.getIsLayingTime().booleanValue()) {
+			map.put("deviceLayingList", deviceLayingDao.queryDeviceLayingByDeviceId(device.getId()));
 		}
 
-		/* 379 */ if (device.getIsSwitch().booleanValue()) {
-			/* 380 */ map.put("deviceSwitchList", deviceSwitchDao.queryDeviceSwitchByDeviceId(device.getId()));
+		if (device.getIsSwitch().booleanValue()) {
+			map.put("deviceSwitchList", deviceSwitchDao.queryDeviceSwitchByDeviceId(device.getId()));
 		}
-		/* 382 */ map.put("device", device);
-		/* 383 */ return renderResult(map);
+		map.put("device", device);
+		return renderResult(map);
 	}
 
 	public Response updateDeviceAlias(String id, String alias, String type) {

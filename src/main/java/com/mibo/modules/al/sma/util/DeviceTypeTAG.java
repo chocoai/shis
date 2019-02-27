@@ -16,6 +16,18 @@ public class DeviceTypeTAG {
 		/* 42 */ return state;
 	}
 
+	//是否是wifi插座
+	public static boolean isWifi(String productModel) {
+		String[] str = { "HOSOWF"};
+		for (int i = 0; i < str.length; i++) {
+			state = productModel.contains(str[i]);
+			if (state) {
+				return state;
+			}
+		}
+		/* 42 */ return state;
+	}
+
 	public static boolean isControl(String productModel) {
 		/* 52 */ for (int i = 0; i < controlStr.length; i++) {
 			/* 53 */ state = productModel.contains(controlStr[i]);
