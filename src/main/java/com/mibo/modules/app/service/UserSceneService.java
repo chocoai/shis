@@ -4,11 +4,13 @@ import com.alibaba.fastjson.JSON;
 import com.aliyuncs.iot.model.v20170420.PubResponse;
 import com.google.gson.Gson;
 import com.jfinal.kit.Base64Kit;
+import com.jfinal.kit.LogKit;
 import com.mibo.common.result.Response;
 import com.mibo.common.util.StringUtil;
 import com.mibo.modules.al.sma.util.ControlBean;
 import com.mibo.modules.al.sma.util.DeviceSendSceneDataBean;
 import com.mibo.modules.al.sma.util.SceneData;
+import com.mibo.modules.al.sma.util.TopicMsgUtil;
 import com.mibo.modules.data.model.Device;
 import com.mibo.modules.data.model.Gateway;
 import com.mibo.modules.data.model.UserScene;
@@ -165,45 +167,51 @@ public class UserSceneService extends com.mibo.common.base.BaseService {
 		List<DeviceSendSceneDataBean.MultiparamsBean> multiparamsBeanList = new ArrayList<DeviceSendSceneDataBean.MultiparamsBean>();
 		for (SceneData.DataBean data : sd.getData()) {
 
-			//场景面板和感应器不执行操作
-			if (data.getControlData1() != null&&!data.getProduct_name().contains("HOSCZB")
-					&&!data.getProduct_name().contains("HODSZB")&&!data.getProduct_name().contains("HOGSZB")
-					&&!data.getProduct_name().contains("HOMSZB")&&!data.getProduct_name().contains("HOSAZB")) {
+//			Device device = deviceDao.queryDeviceByDeviceName(data.getDevice_name());
+//
+//			//确认设备是否在线
+//			if(null!=device&TopicMsgUtil.GetDeviceStatus(device.getProductKey(),device.getDeviceName())) {
 
-				DeviceSendSceneDataBean.MultiparamsBean multiparamsBean = new DeviceSendSceneDataBean.MultiparamsBean();
-				String str = new Gson().toJson(data.getControlData1()).replace("\\", "");
-				str = str.substring(1, str.length() - 1);
+				//场景面板和感应器不执行操作
+				if (data.getControlData1() != null && !data.getProduct_name().contains("HOSCZB")
+						&& !data.getProduct_name().contains("HODSZB") && !data.getProduct_name().contains("HOGSZB")
+						&& !data.getProduct_name().contains("HOMSZB") && !data.getProduct_name().contains("HOSAZB")) {
 
-				ControlBean controlBean = (ControlBean) new Gson().fromJson(str, ControlBean.class);
-				multiparamsBean.setIndex(controlBean.getParams().getIndex());
-				multiparamsBean.setOnOff(controlBean.getParams().isOnOff());
-				multiparamsBean.setName(data.getDevice_name());
-				multiparamsBeanList.add(multiparamsBean);
+					DeviceSendSceneDataBean.MultiparamsBean multiparamsBean = new DeviceSendSceneDataBean.MultiparamsBean();
+					String str = new Gson().toJson(data.getControlData1()).replace("\\", "");
+					str = str.substring(1, str.length() - 1);
 
-				if (data.getProduct_name().contains("HODRZB")) {
-					if (data.getIsControl1()) {
+					ControlBean controlBean = (ControlBean) new Gson().fromJson(str, ControlBean.class);
+					multiparamsBean.setIndex(controlBean.getParams().getIndex());
+					multiparamsBean.setOnOff(controlBean.getParams().isOnOff());
+					multiparamsBean.setName(data.getDevice_name());
+					multiparamsBeanList.add(multiparamsBean);
+
+					if (data.getProduct_name().contains("HODRZB")) {
+						if (data.getIsControl1()) {
+							strJson = strJson + "{\"Name\": \"" + data.getDevice_name() + "\",\"Index\": "
+									+ controlBean.getParams().getIndex() + ",\"State\": " + 1 + "},";
+						} else {
+							strJson = strJson + "{\"Name\": \"" + data.getDevice_name() + "\",\"Index\": "
+									+ controlBean.getParams().getIndex() + ",\"State\": " + 0 + "},";
+						}
+					} else if (data.getProduct_name().contains("HOSWZB11")) {
 						strJson = strJson + "{\"Name\": \"" + data.getDevice_name() + "\",\"Index\": "
-								+ controlBean.getParams().getIndex() + ",\"State\": " + 1 + "},";
+								+ controlBean.getParams().getIndex() + ",\"CurrentLevel\": " + controlBean.getParams().getCurrentLevel()
+								+ ",\"OnLevel\": " + controlBean.getParams().getOnLevel()
+								+ "},";
 					} else {
 						strJson = strJson + "{\"Name\": \"" + data.getDevice_name() + "\",\"Index\": "
-								+ controlBean.getParams().getIndex() + ",\"State\": " + 0 + "},";
+								+ controlBean.getParams().getIndex() + ",\"OnOff\": " + controlBean.getParams().isOnOff()
+								+ "},";
 					}
-				} else if(data.getProduct_name().contains("HOSWZB11")){
-					strJson = strJson + "{\"Name\": \"" + data.getDevice_name() + "\",\"Index\": "
-							+ controlBean.getParams().getIndex()  + ",\"CurrentLevel\": " + controlBean.getParams().getCurrentLevel()
-							+ ",\"OnLevel\": " + controlBean.getParams().getOnLevel()
-							+ "},";
-				}else {
-					strJson = strJson + "{\"Name\": \"" + data.getDevice_name() + "\",\"Index\": "
-							+ controlBean.getParams().getIndex() + ",\"OnOff\": " + controlBean.getParams().isOnOff()
-							+ "},";
 				}
-			}
+//			}
 		}
 
 		String overStrJson = "{\"id\": \"123\",\"version\": \"1.0\",\"multiparams\": ["
 				+ strJson.substring(0, strJson.length() - 1) + "],\"method\": \"set\"}";
-
+		LogKit.warn("场景执行*********************************************************："+overStrJson);
 		DeviceSendSceneDataBean deviceSendSceneDataBean = new DeviceSendSceneDataBean();
 		deviceSendSceneDataBean.setId(StringUtil.getCount());
 		deviceSendSceneDataBean.setMethod("set");
