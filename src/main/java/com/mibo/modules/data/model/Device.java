@@ -93,6 +93,7 @@ public class Device extends BaseDevice<Device> {
             device.setDeviceSecret(deviceSecret);
             device.setDeviceState(Boolean.valueOf(true)); //默认添加在线状态
             device.setAddTime(date);
+            device.setIsSwitch(Boolean.valueOf(true));//有开关
             device.setDeviceProtocolType(2);
             if (device.save()) {
                 return device;
