@@ -88,22 +88,9 @@ public class ProductService extends com.mibo.common.base.BaseService {
 		/* 102 */ return renderResult(this.map);
 	}
 
+	//添加wifi设备
 	@Before({ Tx.class })
-	public Response registerDevice(String userId, String gatewayId, String productModel, String deviceName) {
-		Gateway gateway=null;
-		if (gatewayId != null) {
-			if (StringUtil.isBlanks(new String[] { gatewayId, productModel, deviceName })) {
-				return renderErrorParameter();
-			}
-			gateway = (Gateway) gatewayDao.findById(gatewayId);
-			if (gateway == null) {
-				return renderError("网关编号错误!");
-			}
-			UserGateway userGateway = userGatewayDao.queryUserGatewayByUserIdGatewayId(Integer.valueOf(userId),Integer.valueOf(gatewayId));
-			if (userGateway == null) {
-				userGatewayDao.addUserGateway(Integer.valueOf(userId), Integer.valueOf(gatewayId), new Date());
-			}
-		}
+	public Response addWifiDevice(String userId, String productModel, String deviceName) {
 		this.map = getMap();
 
 		Device device = getRedisDevice(deviceName);
@@ -111,10 +98,7 @@ public class ProductService extends com.mibo.common.base.BaseService {
 			device = deviceDao.queryDeviceByDeviceName(deviceName);
 		}
 		if (device != null) {
-			if (gatewayId != null && Integer.parseInt(gatewayId) != device.getGatewayId().intValue()) {
-				User user = userDao.queryUserByGgatewayId(device.getGatewayId());
-				return renderError(105, "该设备已在" + user.getPhone() + "帐号下绑定！");
-			}else if (gatewayId == null && device != null) {//网关id为空，设备独自运行
+			if (device.getDeviceUserId()!=null) {
 				return renderError(105, "该设备已被绑定！");
 			}
 			this.map.put("ProductKey", device.getProductKey());
@@ -129,11 +113,82 @@ public class ProductService extends com.mibo.common.base.BaseService {
 			this.map.put("ProductKey", productKey);
 			this.map.put("DeviceSecret", deviceSecret);
 
-			if (gatewayId != null) {
-				device = deviceDao.addDevice(gateway.getId(), productModel, productKey, deviceName, deviceSecret,date);
-			}else { //添加wifi设备
-				device = deviceDao.addWifiDevice(Integer.parseInt(userId), productModel, productKey, deviceName, deviceSecret,date);
+			device = deviceDao.addWifiDevice(Integer.parseInt(userId), productModel, productKey, deviceName, deviceSecret,date);
+			if (device != null) {
+				setRedisDevice(device);
+
+				if (DeviceTypeTAG.isWifi(productModel)) {//是否是wifi插座
+					deviceSwitchDao.addWifiDeviceSwitch(device.getId());
+				}
+
 			}
+			return renderResult(this.map);
+		}
+
+		String productKey = ProductUtil.queryProductKeyByProductModel(productModel);
+
+		RegisterDeviceResponse response = DeviceUtil.registerDevice(productKey, deviceName);
+		if (!response.getSuccess().booleanValue()) {
+			return renderError(response.getErrorMessage());
+		}
+		String deviceSecret = response.getData().getDeviceSecret();
+		this.map.put("ProductKey", productKey);
+		this.map.put("DeviceSecret", deviceSecret);
+
+		//添加wifi设备
+		device = deviceDao.addWifiDevice(Integer.parseInt(userId), productModel, productKey, deviceName, deviceSecret,date);
+		if (device != null) {
+			setRedisDevice(device);
+
+			if (DeviceTypeTAG.isWifi(productModel)) {//是否是wifi插座
+				deviceSwitchDao.addWifiDeviceSwitch(device.getId());
+			}
+		}
+		return renderResult(this.map);
+	}
+
+
+	@Before({ Tx.class })
+	public Response registerDevice(String userId, String gatewayId, String productModel, String deviceName) {
+		if (StringUtil.isBlanks(new String[] { gatewayId, productModel, deviceName })) {
+			return renderErrorParameter();
+		}
+
+		Gateway gateway = (Gateway) gatewayDao.findById(gatewayId);
+		if (gateway == null) {
+			return renderError("网关编号错误!");
+		}
+
+		UserGateway userGateway = userGatewayDao.queryUserGatewayByUserIdGatewayId(Integer.valueOf(userId),Integer.valueOf(gatewayId));
+		if (userGateway == null) {
+			userGatewayDao.addUserGateway(Integer.valueOf(userId), Integer.valueOf(gatewayId), new Date());
+		}
+		this.map = getMap();
+
+		Device device = getRedisDevice(deviceName);
+		if (device == null) {
+			device = deviceDao.queryDeviceByDeviceName(deviceName);
+		}
+		if (device != null) {
+
+			if (Integer.parseInt(gatewayId) != device.getGatewayId().intValue()) {
+				User user = userDao.queryUserByGgatewayId(device.getGatewayId());
+				return renderError(105, "该设备已在" + user.getPhone() + "帐号下绑定！");
+			}
+			this.map.put("ProductKey", device.getProductKey());
+			this.map.put("DeviceSecret", device.getDeviceSecret());
+			return renderResult(this.map);
+		}
+		Date date = new Date();
+
+		QueryDeviceDetailResponse deviceInfo = DeviceUtil.queryDeviceByProductKeyDeviceName(deviceName);
+		if (deviceInfo != null) {
+			String productKey = deviceInfo.getData().getProductKey();
+			String deviceSecret = deviceInfo.getData().getDeviceSecret();
+			this.map.put("ProductKey", productKey);
+			this.map.put("DeviceSecret", deviceSecret);
+
+			device = deviceDao.addDevice(gateway.getId(), productModel, productKey, deviceName, deviceSecret,date);
 			if (device != null) {
 				setRedisDevice(device);
 
@@ -147,9 +202,6 @@ public class ProductService extends com.mibo.common.base.BaseService {
 					device.update();
 					int count = DeviceTypeTAG.controlCount(productModel);
 					deviceSwitchDao.addDeviceSwitch(device.getId(), count);
-				}
-				if (DeviceTypeTAG.isWifi(productModel)) {//是否是wifi插座
-					deviceSwitchDao.addWifiDeviceSwitch(device.getId());
 				}
 			}
 			return renderResult(this.map);
@@ -165,11 +217,7 @@ public class ProductService extends com.mibo.common.base.BaseService {
 		this.map.put("ProductKey", productKey);
 		this.map.put("DeviceSecret", deviceSecret);
 
-		if (gatewayId != null) {
-			device = deviceDao.addDevice(gateway.getId(), productModel, productKey, deviceName, deviceSecret,date);
-		}else { //添加wifi设备
-			device = deviceDao.addWifiDevice(Integer.parseInt(userId), productModel, productKey, deviceName, deviceSecret,date);
-		}
+		device = deviceDao.addDevice(gateway.getId(), productModel, productKey, deviceName, deviceSecret,date);
 		if (device != null) {
 			setRedisDevice(device);
 
@@ -183,9 +231,6 @@ public class ProductService extends com.mibo.common.base.BaseService {
 				device.update();
 				int count = DeviceTypeTAG.controlCount(productModel);
 				deviceSwitchDao.addDeviceSwitch(device.getId(), count);
-			}
-			if (DeviceTypeTAG.isWifi(productModel)) {//是否是wifi插座
-				deviceSwitchDao.addWifiDeviceSwitch(device.getId());
 			}
 		}
 		return renderResult(this.map);

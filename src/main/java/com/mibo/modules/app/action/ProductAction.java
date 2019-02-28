@@ -29,6 +29,15 @@ public class ProductAction extends BaseAction
         /*  29 */     renderResponse(productService.registerDevice(getUserId(), gatewayId, productModel, deviceName));
     }
 
+    //添加WIFI设备
+    public void addWifiDevice()
+    {
+        String productModel = getPara("productModel");
+        String deviceName = getPara("deviceName");
+        ProductService productService = (ProductService)enhance(ProductService.class);
+        renderResponse(productService.addWifiDevice(getUserId(), productModel, deviceName));
+    }
+
 
 
     public void getGatewayList()
